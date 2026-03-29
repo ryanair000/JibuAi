@@ -12,3 +12,18 @@
   from = "/webhook"
   to = "/.netlify/functions/webhook"
   status = 200
+
+[[redirects]]
+  from = "/admin/conversations"
+  to = "/.netlify/functions/admin?resource=conversations"
+  status = 200
+
+[[redirects]]
+  from = "/admin/messages"
+  to = "/.netlify/functions/admin?resource=messages"
+  status = 200
+
+[[redirects]]
+  from = "/admin/webhook-events"
+  to = "/.netlify/functions/admin?resource=webhook-events"
+  status = 200

@@ -30,8 +30,11 @@ export const verifyWebhookSubscription = (query: VerificationQuery) => {
   };
 };
 
-export const processIncomingWebhook = async (payload: unknown) => {
-  const persistence = await persistWebhookPayload(payload);
+export const processIncomingWebhook = async (
+  payload: unknown,
+  options?: { rawBody?: string },
+) => {
+  const persistence = await persistWebhookPayload(payload, options?.rawBody);
   const automations: AutomationResult[] = [];
 
   for (const message of persistence.messages) {

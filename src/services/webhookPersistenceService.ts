@@ -1,5 +1,3 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-
 import { env } from '../config/env';
 import { getOrCreateConversationForPhone } from '../repositories/conversationRepo';
 import { createInboundMessage } from '../repositories/messageRepo';
@@ -7,10 +5,16 @@ import { getOrCreateDefaultMerchant } from '../repositories/merchantRepo';
 import { completeWebhookEvent, createWebhookEvent } from '../repositories/webhookEventRepo';
 import { logger } from '../utils/logger';
 import { inferEventType, normalizeInboundMessages } from './metaWebhookNormalizer';
+import { computeWebhookPayloadHash } from './webhookSecurityService';
 
 export type WebhookPersistenceResult = {
   persisted: boolean;
-  reason?: 'database_not_configured' | 'no_supported_messages' | 'persistence_failed';
+  reason?:
+    | 'database_not_configured'
+    | 'duplicate_event'
+    | 'duplicate_messages'
+    | 'no_supported_messages'
+    | 'persistence_failed';
   eventType?: string;
   normalizedMessageCount: number;
   webhookEventId?: string;
@@ -27,13 +31,20 @@ export type PersistedInboundMessage = {
 };
 
 const isDuplicateProviderMessage = (error: unknown): boolean =>
-  error instanceof PrismaClientKnownRequestError && error.code === 'P2002';
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  error.code === 'P2002';
 
 export const persistWebhookPayload = async (
   payload: unknown,
+  rawBody?: string,
 ): Promise<WebhookPersistenceResult> => {
   const eventType = inferEventType(payload);
   const normalizedMessages = normalizeInboundMessages(payload);
+  const payloadHash = computeWebhookPayloadHash(
+    rawBody ?? JSON.stringify(payload ?? {}),
+  );
 
   if (!env.databaseUrl) {
     logger.warn('DATABASE_URL is not configured; skipping webhook persistence');
@@ -46,17 +57,29 @@ export const persistWebhookPayload = async (
     };
   }
 
-  const webhookEvent = await createWebhookEvent(payload, eventType);
+  const webhookEvent = await createWebhookEvent(payload, payloadHash, eventType);
 
   try {
+    if (webhookEvent.isDuplicate) {
+      logger.warn({ webhookEventId: webhookEvent.event.id }, 'Skipping duplicate webhook event');
+      return {
+        persisted: true,
+        reason: 'duplicate_event',
+        eventType,
+        normalizedMessageCount: normalizedMessages.length,
+        webhookEventId: webhookEvent.event.id,
+        messages: [],
+      };
+    }
+
     if (normalizedMessages.length === 0) {
-      await completeWebhookEvent(webhookEvent.id, 'ignored');
+      await completeWebhookEvent(webhookEvent.event.id, 'ignored');
       return {
         persisted: true,
         reason: 'no_supported_messages',
         eventType,
         normalizedMessageCount: 0,
-        webhookEventId: webhookEvent.id,
+        webhookEventId: webhookEvent.event.id,
         messages: [],
       };
     }
@@ -104,17 +127,28 @@ export const persistWebhookPayload = async (
       });
     }
 
-    await completeWebhookEvent(webhookEvent.id, 'processed');
+    await completeWebhookEvent(webhookEvent.event.id, 'processed');
+
+    if (persistedMessages.length === 0) {
+      return {
+        persisted: true,
+        reason: 'duplicate_messages',
+        eventType,
+        normalizedMessageCount: normalizedMessages.length,
+        webhookEventId: webhookEvent.event.id,
+        messages: [],
+      };
+    }
 
     return {
       persisted: true,
       eventType,
       normalizedMessageCount: normalizedMessages.length,
-      webhookEventId: webhookEvent.id,
+      webhookEventId: webhookEvent.event.id,
       messages: persistedMessages,
     };
   } catch (error: unknown) {
-    await completeWebhookEvent(webhookEvent.id, 'failed');
+    await completeWebhookEvent(webhookEvent.event.id, 'failed');
     logger.error({ err: error }, 'Failed to persist webhook payload');
 
     return {
@@ -122,7 +156,7 @@ export const persistWebhookPayload = async (
       reason: 'persistence_failed',
       eventType,
       normalizedMessageCount: normalizedMessages.length,
-      webhookEventId: webhookEvent.id,
+      webhookEventId: webhookEvent.event.id,
       messages: [],
     };
   }

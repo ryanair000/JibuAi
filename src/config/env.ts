@@ -18,7 +18,10 @@ export const env = {
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN ?? 'jibu_verify_2025',
   whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN,
   whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
+  whatsappWabaId: process.env.WHATSAPP_WABA_ID,
+  whatsappAppSecret: process.env.WHATSAPP_APP_SECRET,
   databaseUrl: process.env.DATABASE_URL,
+  adminApiToken: process.env.ADMIN_API_TOKEN,
   defaultMerchantName: process.env.DEFAULT_MERCHANT_NAME ?? 'Jibu AI Pilot',
   defaultMerchantSlug: process.env.DEFAULT_MERCHANT_SLUG ?? 'jibu-ai-pilot',
 };

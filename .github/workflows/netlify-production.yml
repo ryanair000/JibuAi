@@ -1,0 +1,44 @@
+name: Netlify Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: netlify-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ secrets.NETLIFY_AUTH_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_SITE_ID: 692c1304-e202-4d95-a4b1-96f53be93927
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --build --message "GitHub Actions deploy ${GITHUB_SHA}"
+
+  missing-secret:
+    if: ${{ secrets.NETLIFY_AUTH_TOKEN == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain missing configuration
+        run: echo "Add the NETLIFY_AUTH_TOKEN GitHub Actions secret to enable auto deploys."

@@ -89,6 +89,105 @@
       ]
     },
     {
+      "name": "Jibu AI Admin API",
+      "item": [
+        {
+          "name": "List Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_api_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/conversations?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists the most recent conversations from the internal admin API."
+          },
+          "response": []
+        },
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_api_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/messages?limit=20&conversationId={{conversation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "conversationId",
+                  "value": "{{conversation_id}}"
+                }
+              ]
+            },
+            "description": "Lists recent messages. Supply conversationId to narrow the result set."
+          },
+          "response": []
+        },
+        {
+          "name": "List Webhook Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_api_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/webhook-events?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "webhook-events"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lists recent webhook receipts, processing status, and duplicate counts."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Meta WhatsApp Cloud API",
       "item": [
         {
@@ -145,6 +244,14 @@
     },
     {
       "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_api_token",
+      "value": ""
+    },
+    {
+      "key": "conversation_id",
       "value": ""
     },
     {

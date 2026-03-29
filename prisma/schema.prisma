@@ -69,7 +69,9 @@ model WebhookEvent {
   id          String    @id @default(cuid())
   provider    String    @default("meta_whatsapp")
   eventType   String?
+  payloadHash String?   @unique
   payload     Json
+  duplicateCount Int    @default(0)
   receivedAt  DateTime  @default(now())
   processedAt DateTime?
   status      String    @default("received")
