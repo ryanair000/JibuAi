@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "7cb98884-a6ea-43dc-b773-8a3fbd34782f",
+    "name": "Jibu AI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Jibu AI webhook testing and WhatsApp Cloud API message sending."
+  },
+  "item": [
+    {
+      "name": "Jibu AI API",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Checks whether the deployed Jibu AI endpoint is reachable."
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook Verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/webhook?hub.mode=subscribe&hub.verify_token={{verify_token}}&hub.challenge={{challenge}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhook"
+              ],
+              "query": [
+                {
+                  "key": "hub.mode",
+                  "value": "subscribe"
+                },
+                {
+                  "key": "hub.verify_token",
+                  "value": "{{verify_token}}"
+                },
+                {
+                  "key": "hub.challenge",
+                  "value": "{{challenge}}"
+                }
+              ]
+            },
+            "description": "Simulates Meta's verification request. A successful response should return the challenge value as plain text."
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook Sample Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry\": [\n    {\n      \"changes\": [\n        {\n          \"value\": {\n            \"messages\": [\n              {\n                \"from\": \"{{recipient_phone}}\",\n                \"type\": \"text\",\n                \"text\": {\n                  \"body\": \"Hello from Postman\"\n                }\n              }\n            ]\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/webhook",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhook"
+              ]
+            },
+            "description": "Sends a sample inbound webhook payload to your Jibu AI backend for local debugging."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meta WhatsApp Cloud API",
+      "item": [
+        {
+          "name": "Send Test WhatsApp Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{recipient_phone}}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"Hello from Jibu AI via Postman\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://graph.facebook.com/v23.0/{{phone_number_id}}/messages",
+              "protocol": "https",
+              "host": [
+                "graph",
+                "facebook",
+                "com"
+              ],
+              "path": [
+                "v23.0",
+                "{{phone_number_id}}",
+                "messages"
+              ]
+            },
+            "description": "Uses your WhatsApp Cloud API access token and phone number ID to send a real message through Meta."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://jibuai.qybrrlabs.africa"
+    },
+    {
+      "key": "verify_token",
+      "value": "jibu_verify_2025"
+    },
+    {
+      "key": "challenge",
+      "value": "12345"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "phone_number_id",
+      "value": ""
+    },
+    {
+      "key": "recipient_phone",
+      "value": "254700000000"
+    }
+  ]
+}
