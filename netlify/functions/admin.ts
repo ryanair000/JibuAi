@@ -1,9 +1,15 @@
-import { authorizeAdminRequest, getAdminResourceData, isAdminResource } from '../../src/services/adminService';
+import {
+  authorizeAdminRequest,
+  getAdminResourceData,
+  isAdminResource,
+  updateAdminConversationStatus,
+} from '../../src/services/adminService';
 import { getHeaderValue } from '../../src/utils/http';
 import { getQueryValue } from '../../src/utils/http';
 
 type NetlifyFunctionEvent = {
   httpMethod: string;
+  body?: string | null;
   headers?: Record<string, string | undefined> | null;
   path?: string;
   queryStringParameters?: Record<string, string | undefined> | null;
@@ -39,10 +45,7 @@ export const config = {
 };
 
 export const handler = async (event: NetlifyFunctionEvent) => {
-  if (event.httpMethod !== 'GET') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
-
+  const method = event.httpMethod.toUpperCase();
   const authorization = authorizeAdminRequest(event.headers ?? {});
 
   if (!authorization.authorized) {
@@ -69,6 +72,55 @@ export const handler = async (event: NetlifyFunctionEvent) => {
     return jsonResponse(404, { error: 'Admin resource not found' });
   }
 
-  const result = await getAdminResourceData(resource, query);
-  return jsonResponse(200, result);
+  if (method === 'GET') {
+    const result = await getAdminResourceData(resource, query);
+    return jsonResponse(200, result);
+  }
+
+  if (method === 'PATCH' && resource === 'conversations') {
+    let body: Record<string, unknown> = {};
+
+    if (event.body) {
+      try {
+        const parsed = JSON.parse(event.body);
+        body =
+          typeof parsed === 'object' && parsed !== null
+            ? (parsed as Record<string, unknown>)
+            : {};
+      } catch {
+        return jsonResponse(400, { error: 'Invalid JSON payload' });
+      }
+    }
+
+    const result = await updateAdminConversationStatus({
+      conversationId:
+        typeof body.conversationId === 'string' ? body.conversationId : undefined,
+      status: typeof body.status === 'string' ? body.status : undefined,
+    });
+
+    if (!result.ok) {
+      if (result.reason === 'conversation_not_found') {
+        return jsonResponse(404, { error: 'Conversation not found' });
+      }
+
+      if (result.reason === 'missing_conversation_id') {
+        return jsonResponse(400, { error: 'conversationId is required' });
+      }
+
+      if (result.reason === 'missing_status') {
+        return jsonResponse(400, { error: 'status is required' });
+      }
+
+      return jsonResponse(400, {
+        error: 'Invalid status. Allowed values: open, needs_human, resolved',
+      });
+    }
+
+    return jsonResponse(200, {
+      updated: true,
+      conversation: result.data,
+    });
+  }
+
+  return jsonResponse(405, { error: 'Method not allowed' });
 };

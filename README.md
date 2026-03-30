@@ -115,6 +115,7 @@ The project exposes a token-protected internal read API for operational visibili
 
 - `GET /admin/conversations?limit=20`
 - `GET /admin/conversations?limit=20&status=needs_human`
+- `PATCH /admin/conversations`
 - `GET /admin/messages?limit=50&conversationId=<optional>`
 - `GET /admin/webhook-events?limit=20`
 
@@ -122,3 +123,18 @@ Set `ADMIN_API_TOKEN` and pass it as either:
 
 - `Authorization: Bearer <ADMIN_API_TOKEN>`
 - `x-admin-token: <ADMIN_API_TOKEN>`
+
+Use the conversation update endpoint to move chats through the handoff workflow:
+
+```json
+{
+  "conversationId": "<conversation-id>",
+  "status": "resolved"
+}
+```
+
+Allowed status values:
+
+- `open`
+- `needs_human`
+- `resolved`
