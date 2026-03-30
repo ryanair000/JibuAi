@@ -28,7 +28,6 @@ export const getOrCreateConversationForPhone = async (
     },
     update: {
       lastMessageAt: new Date(),
-      status: 'open',
     },
     create: {
       merchantId,
@@ -40,4 +39,15 @@ export const getOrCreateConversationForPhone = async (
   });
 
   return { customer, conversation };
+};
+
+export const updateConversationStatus = async (conversationId: string, status: string) => {
+  return prisma.conversation.update({
+    where: {
+      id: conversationId,
+    },
+    data: {
+      status,
+    },
+  });
 };

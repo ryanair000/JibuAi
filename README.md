@@ -105,6 +105,7 @@ Retry safety is also enabled:
 The seed script creates starter merchant FAQs for the pilot merchant. Incoming text messages are matched against trusted FAQ questions, and Jibu AI replies when a strong FAQ match is found.
 
 If no FAQ match is found, the bot can send a fallback handoff reply using `DEFAULT_FALLBACK_REPLY`.
+Fallback conversations are also marked with `status=needs_human` so they are easy to triage later.
 
 If `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` are not configured, the app still reports the matched FAQ in the webhook response but skips sending the reply.
 
@@ -113,6 +114,7 @@ If `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` are not configured, th
 The project exposes a token-protected internal read API for operational visibility:
 
 - `GET /admin/conversations?limit=20`
+- `GET /admin/conversations?limit=20&status=needs_human`
 - `GET /admin/messages?limit=50&conversationId=<optional>`
 - `GET /admin/webhook-events?limit=20`
 

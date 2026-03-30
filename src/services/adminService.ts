@@ -30,7 +30,10 @@ export const getAdminResourceData = async (resource: AdminResource, query: Admin
 
   switch (resource) {
     case 'conversations': {
-      const conversations = await listRecentConversations(limit);
+      const conversations = await listRecentConversations(
+        limit,
+        getQueryValue(query, 'status'),
+      );
       return {
         resource,
         count: conversations.length,

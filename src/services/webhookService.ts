@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { updateConversationStatus } from '../repositories/conversationRepo';
 import { createOutboundMessage } from '../repositories/messageRepo';
 import { findFaqMatch } from './faqService';
 import { sendWhatsAppTextMessage } from './outboundWhatsAppService';
@@ -96,6 +97,7 @@ export const processIncomingWebhook = async (
       });
 
       if (fallbackSendResult.sent) {
+        await updateConversationStatus(message.conversationId, 'needs_human');
         await storeOutboundAutomationMessage({
           conversationId: message.conversationId,
           recipientPhone: message.senderPhone,
@@ -119,6 +121,7 @@ export const processIncomingWebhook = async (
         replyText: fallbackReply,
         reason: fallbackSendResult.reason,
       });
+      await updateConversationStatus(message.conversationId, 'needs_human');
       continue;
     }
 

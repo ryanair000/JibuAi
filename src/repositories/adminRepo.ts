@@ -1,8 +1,13 @@
 import { prisma } from '../lib/prisma';
 
-export const listRecentConversations = async (limit: number) => {
+export const listRecentConversations = async (limit: number, status?: string) => {
   return prisma.conversation.findMany({
     take: limit,
+    where: status
+      ? {
+          status,
+        }
+      : undefined,
     orderBy: [
       {
         lastMessageAt: 'desc',
