@@ -60,11 +60,9 @@ https://jibuai.qybrrlabs.africa
 
 ## Git Auto Deploy
 
-Git-based production deploys are configured through GitHub Actions in `.github/workflows/netlify-production.yml`.
+Production deploys are expected to come from Netlify's native GitHub integration.
 
-Before pushes to `main` can deploy automatically, add this GitHub Actions secret in the repository settings:
-
-- `NETLIFY_AUTH_TOKEN`
+When the Netlify site is connected to this repository and the production branch is set to `main`, each push to `main` should trigger a Netlify build automatically.
 
 ## Persistence
 
