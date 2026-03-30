@@ -15,12 +15,18 @@ permissions:
 
 jobs:
   deploy:
-    if: ${{ secrets.NETLIFY_AUTH_TOKEN != '' }}
     runs-on: ubuntu-latest
     env:
       NETLIFY_SITE_ID: 692c1304-e202-4d95-a4b1-96f53be93927
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
     steps:
+      - name: Check Netlify configuration
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "NETLIFY_AUTH_TOKEN is not configured."
+            exit 1
+          fi
+
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -35,10 +41,3 @@ jobs:
 
       - name: Deploy to Netlify
         run: npx netlify-cli deploy --prod --build --message "GitHub Actions deploy ${GITHUB_SHA}"
-
-  missing-secret:
-    if: ${{ secrets.NETLIFY_AUTH_TOKEN == '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Explain missing configuration
-        run: echo "Add the NETLIFY_AUTH_TOKEN GitHub Actions secret to enable auto deploys."
