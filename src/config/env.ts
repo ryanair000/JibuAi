@@ -22,6 +22,9 @@ export const env = {
   whatsappAppSecret: process.env.WHATSAPP_APP_SECRET,
   databaseUrl: process.env.DATABASE_URL,
   adminApiToken: process.env.ADMIN_API_TOKEN,
+  defaultFallbackReply:
+    process.env.DEFAULT_FALLBACK_REPLY ??
+    "Thanks for your message. I don't have the answer yet, but a human will follow up shortly.",
   defaultMerchantName: process.env.DEFAULT_MERCHANT_NAME ?? 'Jibu AI Pilot',
   defaultMerchantSlug: process.env.DEFAULT_MERCHANT_SLUG ?? 'jibu-ai-pilot',
 };

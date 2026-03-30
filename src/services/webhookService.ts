@@ -8,6 +8,8 @@ type VerificationQuery = Record<string, unknown>;
 type AutomationResult = {
   senderPhone: string;
   action:
+    | 'fallback_not_sent'
+    | 'fallback_replied'
     | 'faq_replied'
     | 'faq_match_found_but_not_sent'
     | 'faq_no_match'
@@ -16,6 +18,35 @@ type AutomationResult = {
   replyText?: string;
   score?: number;
   reason?: string;
+};
+
+const storeOutboundAutomationMessage = async (input: {
+  conversationId: string;
+  recipientPhone: string;
+  body: string;
+  providerMessageId?: string;
+  responseBody?: unknown;
+  intent: 'faq' | 'fallback';
+}) => {
+  if (!env.databaseUrl) {
+    return;
+  }
+
+  await createOutboundMessage({
+    conversationId: input.conversationId,
+    senderPhone: env.whatsappPhoneNumberId ?? 'jibu-ai',
+    messageType: 'text',
+    providerMessageId: input.providerMessageId,
+    textBody: input.body,
+    rawPayload: {
+      request: {
+        to: input.recipientPhone,
+        body: input.body,
+      },
+      response: input.responseBody ?? {},
+    },
+    intent: input.intent,
+  });
 };
 
 export const verifyWebhookSubscription = (query: VerificationQuery) => {
@@ -49,9 +80,44 @@ export const processIncomingWebhook = async (
     const faqMatch = await findFaqMatch(message.merchantId, message.textBody);
 
     if (!faqMatch) {
+      const fallbackReply = env.defaultFallbackReply?.trim();
+
+      if (!fallbackReply) {
+        automations.push({
+          senderPhone: message.senderPhone,
+          action: 'faq_no_match',
+        });
+        continue;
+      }
+
+      const fallbackSendResult = await sendWhatsAppTextMessage({
+        to: message.senderPhone,
+        body: fallbackReply,
+      });
+
+      if (fallbackSendResult.sent) {
+        await storeOutboundAutomationMessage({
+          conversationId: message.conversationId,
+          recipientPhone: message.senderPhone,
+          body: fallbackReply,
+          providerMessageId: fallbackSendResult.providerMessageId,
+          responseBody: fallbackSendResult.responseBody,
+          intent: 'fallback',
+        });
+
+        automations.push({
+          senderPhone: message.senderPhone,
+          action: 'fallback_replied',
+          replyText: fallbackReply,
+        });
+        continue;
+      }
+
       automations.push({
         senderPhone: message.senderPhone,
-        action: 'faq_no_match',
+        action: 'fallback_not_sent',
+        replyText: fallbackReply,
+        reason: fallbackSendResult.reason,
       });
       continue;
     }
@@ -62,23 +128,14 @@ export const processIncomingWebhook = async (
     });
 
     if (sendResult.sent) {
-      if (env.databaseUrl) {
-        await createOutboundMessage({
-          conversationId: message.conversationId,
-          senderPhone: env.whatsappPhoneNumberId ?? 'jibu-ai',
-          messageType: 'text',
-          providerMessageId: sendResult.providerMessageId,
-          textBody: faqMatch.answer,
-          rawPayload: {
-            request: {
-              to: message.senderPhone,
-              body: faqMatch.answer,
-            },
-            response: sendResult.responseBody ?? {},
-          },
-          intent: 'faq',
-        });
-      }
+      await storeOutboundAutomationMessage({
+        conversationId: message.conversationId,
+        recipientPhone: message.senderPhone,
+        body: faqMatch.answer,
+        providerMessageId: sendResult.providerMessageId,
+        responseBody: sendResult.responseBody,
+        intent: 'faq',
+      });
 
       automations.push({
         senderPhone: message.senderPhone,

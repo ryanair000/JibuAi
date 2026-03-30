@@ -102,7 +102,9 @@ Retry safety is also enabled:
 
 ## FAQ automation
 
-The seed script creates starter merchant FAQs for the pilot merchant. Incoming text messages are matched against trusted FAQ questions, and Jibu AI replies only when a strong FAQ match is found.
+The seed script creates starter merchant FAQs for the pilot merchant. Incoming text messages are matched against trusted FAQ questions, and Jibu AI replies when a strong FAQ match is found.
+
+If no FAQ match is found, the bot can send a fallback handoff reply using `DEFAULT_FALLBACK_REPLY`.
 
 If `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` are not configured, the app still reports the matched FAQ in the webhook response but skips sending the reply.
 
